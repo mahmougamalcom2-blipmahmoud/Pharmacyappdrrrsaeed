@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عملاء صيدلية دكتور سعيد عكاشة</title>
+<meta name="theme-color" content="#1976d2"/>
+<style>
+body{font-family:Arial;background:linear-gradient(135deg,#e3f2fd,#fce4ec);margin:0}
+header{background:linear-gradient(90deg,#1976d2,#c2185b);color:#fff;padding:18px;text-align:center;font-size:20px;font-weight:bold}
+.container{padding:15px;max-width:900px;margin:auto}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+input,textarea,button,select{padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;width:100%}
+button{background:linear-gradient(90deg,#1976d2,#c2185b);color:#fff;border:none;font-weight:bold}
+.client-box{background:#f8f9fa;border-radius:15px;padding:15px;margin-bottom:15px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.08)}
+.client-box img{width:90px;height:90px;border-radius:50%;object-fit:cover;margin-bottom:10px;border:3px solid #1976d2}
+.client-name{font-size:18px;font-weight:bold;color:#1976d2}
+.client-detail{margin:4px 0;color:#444}
+.delete-btn{background:#e53935;margin-top:10px}
+.stats{background:#fff3cd;padding:10px;border-radius:10px;margin-bottom:10px;text-align:center;font-weight:bold}
+</style>
+</head>
+<body>
+<header>عملاء صيدلية دكتور سعيد عكاشة</header>
+<div class="container">
+<div class="stats" id="stats"></div>
+
+<div class="card">
+<h3>إضافة / تعديل عميل</h3>
+<input type="hidden" id="editIndex">
+<input type="file" id="photo">
+<input type="text" id="name" placeholder="اسم العميل">
+<input type="text" id="address" placeholder="العنوان">
+<input type="text" id="phone" placeholder="رقم الهاتف">
+<textarea id="items" placeholder="الأصناف المستخدمة"></textarea>
+<button onclick="saveClient()">حفظ</button>
+</div>
+
+<div class="card">
+<h3>بحث</h3>
+<input type="text" id="search" placeholder="اكتب للبحث" onkeyup="displayClients()">
+<select onchange="displayClients()" id="sort">
+<option value="az">ترتيب أبجدي (أ-ي)</option>
+<option value="za">ترتيب عكسي</option>
+</select>
+</div>
+
+<div id="clientList"></div>
+</div>
+
+<script>
+let clients = JSON.parse(localStorage.getItem('clients')) || [];
+
+function updateStats(){
+document.getElementById('stats').innerText = "إجمالي العملاء: " + clients.length;
+}
+
+function saveClient(){
+let index = document.getElementById('editIndex').value;
+let name = document.getElementById('name').value;
+let address = document.getElementById('address').value;
+let phone = document.getElementById('phone').value;
+let items = document.getElementById('items').value;
+let photoInput = document.getElementById('photo');
+let reader = new FileReader();
+reader.onload = function(){
+let data = {name,address,phone,items,photo:reader.result};
+if(index === "") clients.push(data);
+else clients[index] = data;
+localStorage.setItem('clients',JSON.stringify(clients));
+clearForm();
+displayClients();
+};
+if(photoInput.files[0]) reader.readAsDataURL(photoInput.files[0]);
+else{
+let photo = index!=="" ? clients[index].photo : '';
+let data = {name,address,phone,items,photo};
+if(index === "") clients.push(data);
+else clients[index] = data;
+localStorage.setItem('clients',JSON.stringify(clients));
+clearForm();
+displayClients();
+}
+}
+
+function clearForm(){
+document.getElementById('editIndex').value="";
+document.getElementById('photo').value="";
+document.getElementById('name').value="";
+document.getElementById('address').value="";
+document.getElementById('phone').value="";
+document.getElementById('items').value="";
+}
+
+function displayClients(){
+let filter = document.getElementById('search').value;
+let sort = document.getElementById('sort').value;
+let list = document.getElementById('clientList');
+list.innerHTML='';
+let filtered = clients.filter(c=>c.name.includes(filter));
+filtered.sort((a,b)=> sort==='az'? a.name.localeCompare(b.name): b.name.localeCompare(a.name));
+filtered.forEach((c,i)=>{
+list.innerHTML += `
+<div class="client-box">
+<img src="${c.photo || 'https://via.placeholder.com/90'}">
+<div class="client-name">${c.name}</div>
+<div class="client-detail">📍 ${c.address}</div>
+<div class="client-detail">📞 ${c.phone}</div>
+<div class="client-detail">💊 ${c.items}</div>
+<button onclick="editClient(${clients.indexOf(c)})">تعديل</button>
+<button class="delete-btn" onclick="deleteClient(${clients.indexOf(c)})">حذف</button>
+</div>`;
+});
+updateStats();
+}
+
+function editClient(i){
+let c = clients[i];
+document.getElementById('editIndex').value=i;
+document.getElementById('name').value=c.name;
+document.getElementById('address').value=c.address;
+document.getElementById('phone').value=c.phone;
+document.getElementById('items').value=c.items;
+}
+
+function deleteClient(i){
+clients.splice(i,1);
+localStorage.setItem('clients',JSON.stringify(clients));
+displayClients();
+}
+
+displayClients();
+</script>
+</body>
+</html>
